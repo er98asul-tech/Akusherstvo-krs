@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Акушерство-гинекология КРС</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+</head>
+<body style="margin:0;">
+<style>
+/* layout: colorful clinical-field-kit look; top header + scrollable tab strip (desktop) and a fixed thumb-reach bottom bar (phone, <680px);
+   dashboard = stat tiles + attention feed; cow/calf views = add-form card + responsive card grid */
+:root{
+  --bg:#faf6ef; --surface:#ffffff; --surface-2:#fff9ef; --border:#e6dfcd; --fg:#241f14; --fg-muted:#8a8270;
+  --teal:#0e8f82; --teal-fg:#ffffff; --teal-soft:#dcf3ef;
+  --coral:#e8603c; --coral-soft:#fde6dd;
+  --gold:#d79a1f; --gold-soft:#faeecb;
+  --violet:#7a5cc9; --violet-soft:#ece6fa;
+  --danger:#d63b3b; --danger-soft:#fbe2e0;
+  --warning:#c07c12; --warning-soft:#faecd2;
+  --success:#1f9a5a; --success-soft:#dff3e7;
+  --accent:var(--teal); --accent-soft:var(--teal-soft);
+  --font-display:'IBM Plex Serif',Georgia,serif; --font-body:'IBM Plex Sans',system-ui,sans-serif; --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#181611; --surface:#211f19; --surface-2:#262319; --border:#3a361f; --fg:#f3ede0; --fg-muted:#a79d84;
+    --teal:#4fd6c4; --teal-fg:#0b1f1b; --teal-soft:#13332e;
+    --coral:#ff8a66; --coral-soft:#3a2219;
+    --gold:#ffcf63; --gold-soft:#3a2d10;
+    --violet:#b6a0ff; --violet-soft:#241c3d;
+    --danger:#ff6b6b; --danger-soft:#3a1a1a;
+    --warning:#ffc368; --warning-soft:#3a2a10;
+    --success:#6fe3a0; --success-soft:#15301f;
+    --accent:var(--teal); --accent-soft:var(--teal-soft);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181611; --surface:#211f19; --surface-2:#262319; --border:#3a361f; --fg:#f3ede0; --fg-muted:#a79d84;
+  --teal:#4fd6c4; --teal-fg:#0b1f1b; --teal-soft:#13332e;
+  --coral:#ff8a66; --coral-soft:#3a2219;
+  --gold:#ffcf63; --gold-soft:#3a2d10;
+  --violet:#b6a0ff; --violet-soft:#241c3d;
+  --danger:#ff6b6b; --danger-soft:#3a1a1a;
+  --warning:#ffc368; --warning-soft:#3a2a10;
+  --success:#6fe3a0; --success-soft:#15301f;
+  --accent:var(--teal); --accent-soft:var(--teal-soft);
+  color-scheme: dark;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+body{background:var(--bg); color:var(--fg); font-family:var(--font-body); padding-inline:16px; padding-block:18px 100px; max-width:1000px; margin:0 auto;}
+h1,h2,h3{font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0}
+.eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--teal); font-weight:600}
+
+header.top{display:flex; align-items:center; gap:12px; margin-bottom:16px}
+header.top .mark{width:44px; height:44px; border-radius:12px; background:linear-gradient(140deg,var(--teal),var(--violet)); flex:none; display:flex; align-items:center; justify-content:center}
+header.top .mark svg{width:24px; height:24px}
+header.top h1{font-size:22px; line-height:1.15}
+header.top p{margin:2px 0 0; color:var(--fg-muted); font-size:12.5px}
+
+nav.tabs{display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:4px; margin-bottom:18px; position:sticky; top:env(safe-area-inset-top,0px); z-index:5}
+nav.tabs button{flex:1; font:inherit; font-family:var(--font-body); font-weight:600; font-size:13.5px; background:none; border:none; color:var(--fg-muted); padding:10px 8px; cursor:pointer; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:6px; min-height:44px}
+nav.tabs button.active{color:var(--teal-fg); background:var(--teal)}
+nav.tabs button:focus-visible{outline:2px solid var(--teal); outline-offset:2px}
+nav.tabs button svg{width:16px; height:16px; flex:none}
+
+.view{display:none} .view.active{display:block}
+
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(142px,1fr)); gap:10px; margin-bottom:22px}
+.stat-tile{background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--teal); border-radius:12px; padding:13px 14px}
+.stat-tile .num{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:23px; font-weight:600}
+.stat-tile .lbl{font-size:11.5px; color:var(--fg-muted); margin-top:2px}
+.stat-tile.warn{border-left-color:var(--warning)} .stat-tile.warn .num{color:var(--warning)}
+.stat-tile.ok{border-left-color:var(--success)} .stat-tile.ok .num{color:var(--success)}
+.stat-tile.danger{border-left-color:var(--danger)} .stat-tile.danger .num{color:var(--danger)}
+
+section.block{margin-bottom:26px}
+.block-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap}
+.block-head h2{font-size:18px}
+.count-pill{font-family:var(--font-mono); font-size:11.5px; color:var(--fg-muted); background:var(--surface); border:1px solid var(--border); padding:4px 9px; border-radius:999px}
+
+button.primary{font:inherit; font-family:var(--font-body); font-weight:600; font-size:13.5px; background:var(--teal); color:var(--teal-fg); border:none; border-radius:10px; padding:11px 16px; cursor:pointer; min-height:44px; display:inline-flex; align-items:center; gap:6px}
+button.primary:hover{filter:brightness(1.05)}
+button.ghost{font:inherit; font-family:var(--font-body); font-weight:600; font-size:13.5px; background:var(--surface); border:1px solid var(--border); color:var(--fg); border-radius:10px; padding:10px 15px; cursor:pointer; min-height:44px}
+button.ghost:hover{border-color:var(--teal); color:var(--teal)}
+button.linklike{font:inherit; background:none; border:none; color:var(--danger); font-size:13px; font-weight:600; cursor:pointer; padding:10px 8px; min-height:40px}
+button.linklike.edit{color:var(--teal)}
+
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px}
+.rec-card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; min-width:0; position:relative; overflow:hidden}
+.rec-card::before{content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--card-accent,var(--teal))}
+.rec-card .rec-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+.rec-card .tag{font-family:var(--font-mono); font-size:16px; font-weight:600}
+.rec-card .sub{font-size:12px; color:var(--fg-muted)}
+.chips{display:flex; flex-wrap:wrap; gap:5px}
+.chip{font-size:11px; font-weight:600; font-family:var(--font-mono); padding:3px 8px; border-radius:999px; background:var(--teal-soft); color:var(--teal); white-space:nowrap}
+.chip.danger{background:var(--danger-soft); color:var(--danger)}
+.chip.warning{background:var(--warning-soft); color:var(--warning)}
+.chip.success{background:var(--success-soft); color:var(--success)}
+.chip.gold{background:var(--gold-soft); color:var(--gold)}
+.chip.violet{background:var(--violet-soft); color:var(--violet)}
+.chip.muted{background:var(--surface-2); color:var(--fg-muted)}
+.rec-fields{display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; font-size:12.5px}
+.rec-fields div span{display:block; color:var(--fg-muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em}
+.rec-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:2px}
+
+.empty{border:1px dashed var(--border); border-radius:14px; padding:30px 16px; text-align:center; color:var(--fg-muted); font-size:13.5px; background:var(--surface-2)}
+
+.table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:14px; background:var(--surface)}
+table.grp{border-collapse:collapse; width:100%; min-width:560px; font-size:13px}
+table.grp th, table.grp td{padding:10px 12px; text-align:left; white-space:nowrap}
+table.grp thead th{font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--fg-muted); border-bottom:1px solid var(--border)}
+table.grp tbody tr + tr td{border-top:1px solid var(--border)}
+table.grp td.grpname{font-weight:700; font-family:var(--font-display)}
+table.grp td.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+table.grp td.num.warn{color:var(--warning); font-weight:600}
+table.grp td.num.ok{color:var(--success); font-weight:600}
+
+.bars{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:10px}
+.bar-row{display:grid; grid-template-columns:128px 1fr 44px; align-items:center; gap:10px; font-size:12.5px}
+.bar-row .bl{color:var(--fg-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.bar-track{height:12px; background:var(--surface-2); border-radius:999px; overflow:hidden; min-width:0}
+.bar-fill{height:100%; border-radius:999px; min-width:3px}
+.bar-row .bn{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; color:var(--fg)}
+
+form.add-form{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px 12px}
+form.add-form .full{grid-column:1/-1}
+form.add-form .section-lbl{grid-column:1/-1; font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--fg-muted); border-top:1px solid var(--border); padding-top:10px; margin-top:2px}
+form.add-form .section-lbl:first-child{border-top:none; margin-top:0; padding-top:0}
+form.add-form .checks{grid-column:1/-1; display:flex; flex-wrap:wrap; gap:10px 16px}
+form.add-form label{display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--fg-muted); min-width:0; font-weight:600}
+form.add-form label.check{flex-direction:row; align-items:center; gap:7px; font-size:13px; color:var(--fg); font-weight:500}
+form.add-form label.check input{width:18px; height:18px; accent-color:var(--coral)}
+form.add-form input[type=text], form.add-form input[type=number], form.add-form input[type=date], form.add-form select{
+  font:inherit; font-family:var(--font-body); font-size:16px; padding:10px 10px; border:1.5px solid var(--border); border-radius:9px; background:var(--surface-2); color:var(--fg); width:100%; min-height:44px;
+}
+form.add-form input:focus, form.add-form select:focus{outline:2px solid var(--teal); outline-offset:1px; border-color:var(--teal)}
+form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-content:flex-end; margin-top:4px; flex-wrap:wrap}
+.hint{font-size:11.5px; color:var(--fg-muted); grid-column:1/-1; margin-top:-6px}
+
+.save-status{font-family:var(--font-mono); font-size:11px; color:var(--fg-muted); min-height:14px; align-self:center; margin-right:auto}
+[hidden]{display:none!important}
+
+/* bottom tab bar for phones */
+.bottombar{display:none}
+@media (max-width:680px){
+  nav.tabs{display:none}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .bottombar{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:20;
+    background:var(--surface); border-top:1px solid var(--border);
+    padding:6px 8px calc(8px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -4px 16px rgba(0,0,0,.08);
+  }
+  .bottombar button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--fg-muted); font:inherit; font-family:var(--font-body); font-size:10.5px; font-weight:600; padding:6px 2px; border-radius:10px; min-height:48px}
+  .bottombar button svg{width:21px; height:21px}
+  .bottombar button.active{color:var(--teal)}
+}
+</style>
+
+<header class="top">
+  <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9Z"/></svg></div>
+  <div>
+    <div class="eyebrow">Полевой журнал исследования</div>
+    <h1>Акушерство-гинекология КРС</h1>
+    <p>Отёл, заболевания, качество уыза по Brix, передача иммунитета телятам</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="dash" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+    Дашборд
+  </button>
+  <button data-tab="cows">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M8 6 6 3M16 6l2-3M9 13h.01M15 13h.01"/></svg>
+    Коровы
+  </button>
+  <button data-tab="calves">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M9 8 7.5 5M15 8l1.5-3M10.5 14h.01M13.5 14h.01"/></svg>
+    Телята
+  </button>
+</nav>
+
+<div id="view-dash" class="view active">
+  <div class="stat-grid" id="statGrid"></div>
+
+  <section class="block">
+    <div class="block-head"><h2>Сравнение по группам</h2></div>
+    <div id="groupTableWrap" class="table-wrap"><div class="empty">Загрузка…</div></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Качество уыза (Brix)</h2></div>
+    <div id="brixBars" class="bars"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Передача иммунитета телятам</h2></div>
+    <div id="transferBars" class="bars"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Частые заболевания</h2></div>
+    <div id="diseaseBars" class="bars"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>Требуют внимания</h2></div>
+    <div id="attentionList" class="card-grid"><div class="empty">Загрузка…</div></div>
+  </section>
+</div>
+
+<div id="view-cows" class="view">
+  <div class="block-head">
+    <h2>Коровы</h2>
+    <button class="primary" id="btnShowCowForm">+ Добавить корову</button>
+  </div>
+  <form class="add-form" id="cowForm" hidden>
+    <input type="hidden" name="_editSlug">
+    <h3 class="full" id="cowFormTitle" style="font-size:15px">Новая запись</h3>
+    <div class="section-lbl">Животное</div>
+    <label>Номер (бирка)*<input type="text" name="tag" required placeholder="напр. 0427"></label>
+    <label>Порода<input type="text" name="breed" placeholder="напр. голштинская"></label>
+    <label>Номер лактации<input type="number" name="lactation" min="1" step="1"></label>
+    <label>Группа
+      <select name="group">
+        <option value="">—</option>
+        <option>Иммунофан</option>
+        <option>Полиоксидоний</option>
+        <option>Контроль</option>
+      </select>
+    </label>
+    <label>Статус<select name="status"><option value="active">Активна</option><option value="culled">Выбыла</option></select></label>
+
+    <div class="section-lbl">Отёл</div>
+    <label>Дата отёла<input type="date" name="calvingDate"></label>
+    <label>Продолжительность отёла, ч<input type="number" name="calvingDurationH" min="0" step="0.5"></label>
+    <label>Родовспоможение
+      <select name="assistance"><option value="">—</option><option value="no">Не потребовалось</option><option value="yes">Потребовалось</option></select>
+    </label>
+    <label>Отделение последа, ч<input type="number" name="placentaH" min="0" step="0.5"></label>
+
+    <div class="section-lbl">Качество уыза (1-е доение)</div>
+    <label>Brix, %<input type="number" name="colostrumBrix" min="0" max="40" step="0.1" placeholder="напр. 24"></label>
+    <label>Показатель «Лактан 1-4М», жир %<input type="number" name="laktanFat" min="0" step="0.1"></label>
+    <label>Показатель «Лактан 1-4М», белок %<input type="number" name="laktanProtein" min="0" step="0.1"></label>
+    <div class="hint">Ориентир (Bartier 2015; Quigley 2013): ≥22 % Brix — высокое качество уыза, 18–21,9 % — сомнительное, &lt;18 % — низкое.</div>
+
+    <div class="section-lbl">Послеродовой период и воспроизводство</div>
+    <label>Инволюция матки, +15 сут
+      <select name="involution15"><option value="">Не оценивалась</option><option value="normal">В норме</option><option value="delayed">Замедлена</option></select>
+    </label>
+    <label>Инволюция матки, +30 сут
+      <select name="involution30"><option value="">Не оценивалась</option><option value="normal">В норме</option><option value="delayed">Замедлена</option></select>
+    </label>
+    <label>Первая охота, сут после отёла<input type="number" name="firstEstrusDay" min="0" step="1"></label>
+    <label>Сервис-период, сут<input type="number" name="servicePeriodDays" min="0" step="1"></label>
+    <label>Число осеменений<input type="number" name="inseminations" min="0" step="1"></label>
+    <label>Диагностика стельности
+      <select name="pregnancy"><option value="">Не определена</option><option value="pregnant">Стельная</option><option value="open">Яловая</option></select>
+    </label>
+
+    <div class="section-lbl">Зарегистрированные заболевания</div>
+    <div class="checks full">
+      <label class="check"><input type="checkbox" name="d_retained_placenta"> Задержание последа</label>
+      <label class="check"><input type="checkbox" name="d_metritis"> Метрит</label>
+      <label class="check"><input type="checkbox" name="d_endometritis"> Клинический эндометрит</label>
+      <label class="check"><input type="checkbox" name="d_subinvolution"> Субинволюция матки</label>
+      <label class="check"><input type="checkbox" name="d_mastitis"> Мастит</label>
+      <label class="check"><input type="checkbox" name="d_ketosis"> Кетоз</label>
+      <label class="check"><input type="checkbox" name="d_other"> Другое (см. примечания)</label>
+    </div>
+    <label class="full">Примечания<input type="text" name="notes"></label>
+
+    <div class="form-actions">
+      <span class="save-status" id="cowSaveStatus"></span>
+      <button type="button" class="ghost" id="btnCancelCow">Отмена</button>
+      <button type="submit" class="primary" id="cowSubmitBtn">Сохранить</button>
+    </div>
+  </form>
+  <div class="block-head"><span class="count-pill" id="cowCount"></span></div>
+  <div id="cowList" class="card-grid"><div class="empty">Загрузка…</div></div>
+</div>
+
+<div id="view-calves" class="view">
+  <div class="block-head">
+    <h2>Телята</h2>
+    <button class="primary" id="btnShowCalfForm">+ Добавить телёнка</button>
+  </div>
+  <form class="add-form" id="calfForm" hidden>
+    <input type="hidden" name="_editSlug">
+    <h3 class="full" id="calfFormTitle" style="font-size:15px">Новая запись</h3>
+    <label>Номер (бирка)*<input type="text" name="tag" required placeholder="напр. 0427-1"></label>
+    <label>Мать (номер коровы)
+      <select name="motherTag" id="motherSelect"><option value="">—</option></select>
+    </label>
+    <label>Пол<select name="sex"><option value="">—</option><option value="f">Тёлочка</option><option value="m">Бычок</option></select></label>
+    <label>Дата рождения<input type="date" name="birthDate"></label>
+    <label>Живая масса при рождении, кг<input type="number" name="birthWeight" min="0" step="0.1"></label>
+    <label>Лёгкость отёла<select name="calvingEase"><option value="">—</option><option value="easy">Лёгкий</option><option value="assisted">С помощью</option><option value="hard">Тяжёлый</option></select></label>
+    <label>Время первой выпойки уыза, ч<input type="number" name="colostrumH" min="0" step="0.5"></label>
+    <label>Объём уыза, л<input type="number" name="colostrumL" min="0" step="0.1"></label>
+    <label>Brix уыза при выпойке, %<input type="number" name="colostrumBrix" min="0" max="40" step="0.1"></label>
+    <label>IgG сыворотки, г/л<input type="number" name="igg" min="0" step="0.1"></label>
+    <label>Общий белок сыворотки, г/дл<input type="number" name="totalProtein" min="0" step="0.1"></label>
+    <label>Клинический балл (1–7 сут)<input type="number" name="healthScore" min="0" step="1"></label>
+    <label>Статус<select name="status"><option value="alive">Жив</option><option value="dead">Пал</option></select></label>
+    <div class="checks full">
+      <label class="check"><input type="checkbox" name="d_diarrhea"> Диарея</label>
+      <label class="check"><input type="checkbox" name="d_respiratory"> Респираторное заболевание</label>
+      <label class="check"><input type="checkbox" name="d_omphalitis"> Омфалит</label>
+    </div>
+    <div class="hint">Статус передачи иммунитета рассчитывается автоматически по IgG (или общему белку), по классификации Lombard et al., 2020 / Weaver et al., 2000.</div>
+    <label class="full">Примечания<input type="text" name="notes"></label>
+    <div class="form-actions">
+      <span class="save-status" id="calfSaveStatus"></span>
+      <button type="button" class="ghost" id="btnCancelCalf">Отмена</button>
+      <button type="submit" class="primary" id="calfSubmitBtn">Сохранить</button>
+    </div>
+  </form>
+  <div class="block-head"><span class="count-pill" id="calfCount"></span></div>
+  <div id="calfList" class="card-grid"><div class="empty">Загрузка…</div></div>
+</div>
+
+<nav class="bottombar">
+  <button data-tab="dash" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+    Дашборд
+  </button>
+  <button data-tab="cows">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M8 6 6 3M16 6l2-3M9 13h.01M15 13h.01"/></svg>
+    Коровы
+  </button>
+  <button data-tab="calves">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M9 8 7.5 5M15 8l1.5-3M10.5 14h.01M13.5 14h.01"/></svg>
+    Телята
+  </button>
+</nav>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- tabs (top strip + bottom bar share the same switcher) ----------
+  var allTabButtons = document.querySelectorAll("nav.tabs button, nav.bottombar button");
+  function activateTab(name){
+    allTabButtons.forEach(function(b){ b.classList.toggle("active", b.dataset.tab===name); });
+    document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+    document.getElementById("view-" + name).classList.add("active");
+    window.scrollTo({top:0, behavior:"instant" in window ? "instant" : "auto"});
+  }
+  allTabButtons.forEach(function(btn){ btn.addEventListener("click", function(){ activateTab(btn.dataset.tab); }); });
+
+  // ---------- state ----------
+  var cows = {};   // tag -> doc
+  var calves = {}; // tag -> doc
+  var db = null, userCap = null, canWrite = false;
+
+  function esc(s){
+    return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function fmtDate(d){
+    if(!d) return "—";
+    try{ var dt=new Date(d+"T00:00:00"); return dt.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric"}); }catch(e){ return d; }
+  }
+  function daysSince(d){
+    if(!d) return null;
+    var dt = new Date(d+"T00:00:00");
+    if(isNaN(dt)) return null;
+    var n = Math.floor((Date.now()-dt.getTime())/86400000);
+    return n>=0 ? n : null;
+  }
+  // database doc ids only allow A-Z a-z 0-9 _ - . ~ : @ + — ear tags are often
+  // Cyrillic/mixed, so store the real tag as a field and use a sanitized slug as the id
+  function slugify(s){
+    var out = (s||"").toString().trim().replace(/[^A-Za-z0-9_\-.~:@+]/g, "_");
+    out = out.replace(/_{2,}/g, "_").replace(/^[_.]+|[_.]+$/g, "");
+    if(!out) out = "id" + Date.now().toString(36);
+    return out.slice(0, 180);
+  }
+
+  // ---------- Brix classification (Bartier et al., 2015; Quigley et al., 2013) ----------
+  function brixStatus(v){
+    if(v==null || v==="") return null;
+    var n = parseFloat(v);
+    if(isNaN(n)) return null;
+    if(n>=22) return {label:"Brix "+n+"% — высокое", cls:"success"};
+    if(n>=18) return {label:"Brix "+n+"% — сомнительное", cls:"warning"};
+    return {label:"Brix "+n+"% — низкое", cls:"danger"};
+  }
+
+  // ---------- passive transfer classification (Lombard 2020 / Weaver 2000) ----------
+  function transferStatus(calf){
+    if(calf.igg!=null && calf.igg!==""){
+      var v = parseFloat(calf.igg);
+      if(isNaN(v)) return null;
+      if(v>=25) return {label:"Отличная", cls:"success"};
+      if(v>=18) return {label:"Хорошая", cls:"success"};
+      if(v>=10) return {label:"Удовлетворительная", cls:"warning"};
+      return {label:"Неудовлетворительная", cls:"danger"};
+    }
+    if(calf.totalProtein!=null && calf.totalProtein!==""){
+      var tp = parseFloat(calf.totalProtein);
+      if(isNaN(tp)) return null;
+      if(tp>=5.5) return {label:"Хорошая (по ОБ)", cls:"success"};
+      if(tp>=5.2) return {label:"Удовлетворительная (по ОБ)", cls:"warning"};
+      return {label:"Неудовлетворительная (по ОБ)", cls:"danger"};
+    }
+    return null;
+  }
+
+  var COW_DISEASES = [
+    ["d_retained_placenta","Задержание последа"],
+    ["d_metritis","Метрит"],
+    ["d_endometritis","Эндометрит"],
+    ["d_subinvolution","Субинволюция матки"],
+    ["d_mastitis","Мастит"],
+    ["d_ketosis","Кетоз"]
+  ];
+  var CALF_DISEASES = [
+    ["d_diarrhea","Диарея"],
+    ["d_respiratory","Респираторное"],
+    ["d_omphalitis","Омфалит"]
+  ];
+  function diseaseList(rec, dict){
+    return dict.filter(function(d){ return !!rec[d[0]]; }).map(function(d){ return d[1]; });
+  }
+
+  // ---------- rendering: dashboard ----------
+  function renderDash(){
+    var cowList = Object.values(cows);
+    var calfList = Object.values(calves);
+    var activeCows = cowList.filter(function(c){ return c.status!=="culled"; });
+    var sick = cowList.filter(function(c){ return diseaseList(c, COW_DISEASES).length || c.d_other; });
+    var sp = cowList.map(function(c){ return c.servicePeriodDays; }).filter(function(v){ return v!=null && v!==""; }).map(Number);
+    var avgSp = sp.length ? Math.round(sp.reduce(function(a,b){return a+b;},0)/sp.length) : null;
+    var brixVals = cowList.map(function(c){ return c.colostrumBrix; }).filter(function(v){ return v!=null && v!==""; }).map(Number);
+    var avgBrix = brixVals.length ? (brixVals.reduce(function(a,b){return a+b;},0)/brixVals.length).toFixed(1) : null;
+    var lowBrix = brixVals.filter(function(v){ return v<18; }).length;
+    var hs = calfList.map(function(c){ return c.healthScore; }).filter(function(v){ return v!=null && v!==""; }).map(Number);
+    var avgHs = hs.length ? (hs.reduce(function(a,b){return a+b;},0)/hs.length).toFixed(1) : null;
+    var satCount = calfList.filter(function(c){ var t=transferStatus(c); return t && (t.cls==="success"); }).length;
+    var classified = calfList.filter(function(c){ return transferStatus(c); }).length;
+
+    var tiles = [
+      {num: cowList.length, lbl: "Коров в журнале"},
+      {num: activeCows.length, lbl: "Активных коров", cls:""},
+      {num: cowList.length? Math.round(100*sick.length/cowList.length)+"%":"—", lbl: "С заболеваниями", cls: sick.length? "warn":"ok"},
+      {num: avgBrix!=null? avgBrix+"%":"—", lbl: "Brix уыза (сред.)", cls: lowBrix? "warn":"ok"},
+      {num: avgSp!=null? avgSp:"—", lbl: "Сервис-период, сут"},
+      {num: calfList.length, lbl: "Телят в журнале"},
+      {num: avgHs!=null? avgHs:"—", lbl: "Клин. балл телят (сред.)"},
+      {num: classified? Math.round(100*satCount/classified)+"%":"—", lbl: "Хор./отл. передача IgG", cls: classified && satCount/classified<0.7? "warn":"ok"},
+    ];
+    document.getElementById("statGrid").innerHTML = tiles.map(function(t){
+      return '<div class="stat-tile '+(t.cls||"")+'"><div class="num">'+esc(t.num)+'</div><div class="lbl">'+esc(t.lbl)+'</div></div>';
+    }).join("");
+
+    var attention = [];
+    cowList.forEach(function(c){
+      var dz = diseaseList(c, COW_DISEASES);
+      if(c.d_other) dz.push("другое");
+      if(dz.length) attention.push({type:"cow", tag:c.tag, text:"Корова "+c.tag+": "+dz.join(", ")});
+      if(c.involution30==="delayed") attention.push({type:"cow", tag:c.tag, text:"Корова "+c.tag+": инволюция матки замедлена (+30 сут)"});
+      var bs = brixStatus(c.colostrumBrix);
+      if(bs && bs.cls!=="success") attention.push({type:"cow", tag:c.tag, text:"Корова "+c.tag+": уыз — "+bs.label.toLowerCase()});
+    });
+    calfList.forEach(function(c){
+      var t = transferStatus(c);
+      if(t && t.cls==="danger") attention.push({type:"calf", tag:c.tag, text:"Телёнок "+c.tag+": неудовлетворительная передача иммунитета"});
+      var dz = diseaseList(c, CALF_DISEASES);
+      if(dz.length) attention.push({type:"calf", tag:c.tag, text:"Телёнок "+c.tag+": "+dz.join(", ")});
+      if(c.status==="dead") attention.push({type:"calf", tag:c.tag, text:"Телёнок "+c.tag+": падёж"});
+    });
+    var box = document.getElementById("attentionList");
+    if(!attention.length){
+      box.innerHTML = '<div class="empty">Нет записей, требующих внимания.</div>';
+    } else {
+      box.innerHTML = attention.map(function(a){
+        return '<div class="rec-card" style="--card-accent:var(--danger)"><div class="rec-top"><span class="tag">'+esc(a.tag)+'</span><span class="chip danger">'+(a.type==="cow"?"корова":"телёнок")+'</span></div><div class="sub">'+esc(a.text)+'</div></div>';
+      }).join("");
+    }
+
+    renderGroupTable(cowList, calfList);
+    renderBrixBars(cowList);
+    renderTransferBars(calfList);
+    renderDiseaseBars(cowList, calfList);
+  }
+
+  function avg(arr){ var n=arr.filter(function(v){return v!=null && v!=="" && !isNaN(v);}).map(Number); return n.length? n.reduce(function(a,b){return a+b;},0)/n.length : null; }
+  function pct(part, total){ return total? Math.round(100*part/total) : null; }
+
+  function barRow(label, val, max, color, suffix){
+    var w = max>0 ? Math.max(3, Math.round(100*val/max)) : 0;
+    return '<div class="bar-row"><span class="bl">'+esc(label)+'</span>'
+      +'<span class="bar-track"><span class="bar-fill" style="width:'+w+'%; background:'+color+'"></span></span>'
+      +'<span class="bn">'+esc(val)+(suffix||'')+'</span></div>';
+  }
+
+  var GROUPS = ["Иммунофан","Полиоксидоний","Контроль"];
+  function renderGroupTable(cowList, calfList){
+    var tagToGroup = {};
+    cowList.forEach(function(c){ tagToGroup[c.tag] = c.group || "Без группы"; });
+    var rows = GROUPS.concat(cowList.some(function(c){return !c.group;}) ? ["Без группы"] : []).map(function(g){
+      var gc = cowList.filter(function(c){ return (c.group||"Без группы")===g; });
+      var gcalves = calfList.filter(function(c){ return tagToGroup[c.motherTag]===g; });
+      var sickN = gc.filter(function(c){ return diseaseList(c,COW_DISEASES).length || c.d_other; }).length;
+      var brixAvg = avg(gc.map(function(c){ return c.colostrumBrix; }));
+      var spAvg = avg(gc.map(function(c){ return c.servicePeriodDays; }));
+      var classified = gcalves.filter(function(c){ return transferStatus(c); });
+      var good = classified.filter(function(c){ return transferStatus(c).cls==="success"; }).length;
+      return {g:g, n:gc.length, sickPct:pct(sickN,gc.length), brix:brixAvg, sp:spAvg, nCalves:gcalves.length, igGoodPct:pct(good, classified.length)};
+    }).filter(function(r){ return r.n>0 || r.nCalves>0; });
+
+    var wrap = document.getElementById("groupTableWrap");
+    if(!rows.length){ wrap.innerHTML = '<div class="empty">Добавьте коров с указанием группы, чтобы увидеть сравнение.</div>'; return; }
+    wrap.innerHTML = '<table class="grp"><thead><tr>'
+      +'<th>Группа</th><th>Коров</th><th>С осложнениями</th><th>Brix сред.</th><th>Сервис-период</th><th>Телят</th><th>Хор./отл. IgG</th>'
+      +'</tr></thead><tbody>'
+      + rows.map(function(r){
+        return '<tr>'
+          +'<td class="grpname">'+esc(r.g)+'</td>'
+          +'<td class="num">'+r.n+'</td>'
+          +'<td class="num'+(r.sickPct!=null && r.sickPct>0?' warn':'')+'">'+(r.sickPct!=null? r.sickPct+'%':'—')+'</td>'
+          +'<td class="num">'+(r.brix!=null? r.brix.toFixed(1)+'%':'—')+'</td>'
+          +'<td class="num">'+(r.sp!=null? Math.round(r.sp)+' сут':'—')+'</td>'
+          +'<td class="num">'+r.nCalves+'</td>'
+          +'<td class="num'+(r.igGoodPct!=null?(r.igGoodPct>=70?' ok':' warn'):'')+'">'+(r.igGoodPct!=null? r.igGoodPct+'%':'—')+'</td>'
+          +'</tr>';
+      }).join("")
+      +'</tbody></table>';
+  }
+
+  function renderBrixBars(cowList){
+    var vals = cowList.map(function(c){ return c.colostrumBrix; }).filter(function(v){ return v!=null && v!==""; }).map(Number);
+    var box = document.getElementById("brixBars");
+    if(!vals.length){ box.innerHTML = '<div class="empty">Нет данных по Brix.</div>'; return; }
+    var high = vals.filter(function(v){ return v>=22; }).length;
+    var mid = vals.filter(function(v){ return v>=18 && v<22; }).length;
+    var low = vals.filter(function(v){ return v<18; }).length;
+    var max = Math.max(high, mid, low, 1);
+    box.innerHTML = barRow("Высокое (≥22%)", high, max, "var(--success)")
+      + barRow("Сомнительное (18–21,9%)", mid, max, "var(--warning)")
+      + barRow("Низкое (<18%)", low, max, "var(--danger)");
+  }
+
+  function renderTransferBars(calfList){
+    var labels = [["Отличная","success"],["Хорошая","success"],["Удовлетворительная","warning"],["Неудовлетворительная","danger"]];
+    var counts = {};
+    labels.forEach(function(l){ counts[l[0]] = 0; });
+    var unmeasured = 0;
+    calfList.forEach(function(c){
+      var t = transferStatus(c);
+      if(!t){ unmeasured++; return; }
+      var base = t.label.replace(" (по ОБ)","");
+      if(counts[base]!=null) counts[base]++;
+    });
+    var box = document.getElementById("transferBars");
+    if(!calfList.length){ box.innerHTML = '<div class="empty">Нет данных по телятам.</div>'; return; }
+    var max = Math.max.apply(null, labels.map(function(l){ return counts[l[0]]; }).concat([unmeasured,1]));
+    box.innerHTML = labels.map(function(l){ return barRow(l[0], counts[l[0]], max, "var(--"+l[1]+")"); }).join("")
+      + barRow("Не измерено", unmeasured, max, "var(--fg-muted)");
+  }
+
+  function renderDiseaseBars(cowList, calfList){
+    var counts = {};
+    cowList.forEach(function(c){ diseaseList(c,COW_DISEASES).forEach(function(n){ counts[n]=(counts[n]||0)+1; }); });
+    calfList.forEach(function(c){ diseaseList(c,CALF_DISEASES).forEach(function(n){ counts[n]=(counts[n]||0)+1; }); });
+    var entries = Object.keys(counts).map(function(k){ return [k, counts[k]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,8);
+    var box = document.getElementById("diseaseBars");
+    if(!entries.length){ box.innerHTML = '<div class="empty">Заболеваний не зарегистрировано.</div>'; return; }
+    var max = entries[0][1];
+    box.innerHTML = entries.map(function(e){ return barRow(e[0], e[1], max, "var(--coral)"); }).join("");
+  }
+
+  // ---------- rendering: cows ----------
+  function cowCard(c){
+    var chips = [];
+    if(c.group) chips.push('<span class="chip violet">'+esc(c.group)+'</span>');
+    if(c.status==="culled") chips.push('<span class="chip muted">выбыла</span>');
+    diseaseList(c, COW_DISEASES).forEach(function(n){ chips.push('<span class="chip danger">'+esc(n)+'</span>'); });
+    if(c.d_other) chips.push('<span class="chip danger">другое</span>');
+    var bs = brixStatus(c.colostrumBrix);
+    if(bs) chips.push('<span class="chip '+bs.cls+'">'+esc(bs.label)+'</span>');
+    if(c.pregnancy==="pregnant") chips.push('<span class="chip success">стельная</span>');
+    if(c.pregnancy==="open") chips.push('<span class="chip warning">яловая</span>');
+
+    var ds = daysSince(c.calvingDate);
+    var fields = [];
+    if(c.breed) fields.push(["Порода", c.breed]);
+    if(c.lactation) fields.push(["Лактация", c.lactation]);
+    if(c.calvingDate) fields.push(["Отёл", fmtDate(c.calvingDate) + (ds!=null? " · "+ds+" сут назад":"")]);
+    if(c.calvingDurationH) fields.push(["Продолж. отёла", c.calvingDurationH+" ч"]);
+    if(c.assistance) fields.push(["Родовспоможение", c.assistance==="yes"?"да":"нет"]);
+    if(c.laktanFat) fields.push(["Жир (Лактан)", c.laktanFat+"%"]);
+    if(c.laktanProtein) fields.push(["Белок (Лактан)", c.laktanProtein+"%"]);
+    if(c.involution30) fields.push(["Инволюция +30сут", c.involution30==="normal"?"норма":"замедлена"]);
+    if(c.firstEstrusDay) fields.push(["Первая охота", c.firstEstrusDay+" сут"]);
+    if(c.servicePeriodDays) fields.push(["Сервис-период", c.servicePeriodDays+" сут"]);
+    if(c.inseminations) fields.push(["Осеменений", c.inseminations]);
+
+    var accent = (diseaseList(c,COW_DISEASES).length||c.d_other) ? "var(--danger)" : (bs && bs.cls!=="success") ? "var(--warning)" : "var(--teal)";
+    return '<div class="rec-card" style="--card-accent:'+accent+'">'
+      +'<div class="rec-top"><span class="tag">№ '+esc(c.tag)+'</span></div>'
+      +(chips.length?'<div class="chips">'+chips.join("")+'</div>':'')
+      +(fields.length?'<div class="rec-fields">'+fields.map(function(f){return '<div><span>'+esc(f[0])+'</span>'+esc(f[1])+'</div>';}).join("")+'</div>':'')
+      +(c.notes?'<div class="sub">'+esc(c.notes)+'</div>':'')
+      +'<div class="rec-actions">'+(canWrite?'<button class="linklike edit" data-edit-cow="'+esc(c.slug)+'">Изменить</button><button class="linklike" data-del-cow="'+esc(c.slug)+'">Удалить</button>':'')+'</div>'
+      +'</div>';
+  }
+
+  function renderCows(){
+    var list = Object.values(cows).sort(function(a,b){ return (a.tag||"").localeCompare(b.tag||""); });
+    document.getElementById("cowCount").textContent = list.length + (list.length===1?" запись":" записей");
+    var box = document.getElementById("cowList");
+    box.innerHTML = list.length ? list.map(cowCard).join("") : '<div class="empty">Пока нет записей о коровах. Добавьте первую запись кнопкой выше.</div>';
+    var sel = document.getElementById("motherSelect");
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">—</option>' + list.map(function(c){ return '<option value="'+esc(c.tag)+'">'+esc(c.tag)+'</option>'; }).join("");
+    sel.value = cur;
+  }
+
+  // ---------- rendering: calves ----------
+  function calfCard(c){
+    var chips = [];
+    var t = transferStatus(c);
+    if(t) chips.push('<span class="chip '+t.cls+'">'+t.label+'</span>');
+    if(c.status==="dead") chips.push('<span class="chip danger">падёж</span>');
+    if(c.sex) chips.push('<span class="chip muted">'+(c.sex==="f"?"тёлочка":"бычок")+'</span>');
+    diseaseList(c, CALF_DISEASES).forEach(function(n){ chips.push('<span class="chip danger">'+esc(n)+'</span>'); });
+
+    var ds = daysSince(c.birthDate);
+    var fields = [];
+    if(c.motherTag) fields.push(["Мать", c.motherTag]);
+    if(c.birthDate) fields.push(["Рождение", fmtDate(c.birthDate) + (ds!=null? " · "+ds+" сут":"")]);
+    if(c.birthWeight) fields.push(["Масса", c.birthWeight+" кг"]);
+    if(c.calvingEase) fields.push(["Отёл", {easy:"лёгкий",assisted:"с помощью",hard:"тяжёлый"}[c.calvingEase]||c.calvingEase]);
+    if(c.colostrumH) fields.push(["Выпойка уыза", c.colostrumH+" ч"]);
+    if(c.colostrumL) fields.push(["Объём уыза", c.colostrumL+" л"]);
+    if(c.colostrumBrix) fields.push(["Brix уыза", c.colostrumBrix+"%"]);
+    if(c.igg) fields.push(["IgG", c.igg+" г/л"]);
+    if(c.totalProtein) fields.push(["Общий белок", c.totalProtein+" г/дл"]);
+    if(c.healthScore!=null && c.healthScore!=="") fields.push(["Клин. балл", c.healthScore]);
+
+    var accent = c.status==="dead" ? "var(--danger)" : (t && t.cls==="danger") ? "var(--danger)" : (diseaseList(c,CALF_DISEASES).length? "var(--warning)" : "var(--coral)");
+    return '<div class="rec-card" style="--card-accent:'+accent+'">'
+      +'<div class="rec-top"><span class="tag">№ '+esc(c.tag)+'</span></div>'
+      +(chips.length?'<div class="chips">'+chips.join("")+'</div>':'')
+      +(fields.length?'<div class="rec-fields">'+fields.map(function(f){return '<div><span>'+esc(f[0])+'</span>'+esc(f[1])+'</div>';}).join("")+'</div>':'')
+      +(c.notes?'<div class="sub">'+esc(c.notes)+'</div>':'')
+      +'<div class="rec-actions">'+(canWrite?'<button class="linklike edit" data-edit-calf="'+esc(c.slug)+'">Изменить</button><button class="linklike" data-del-calf="'+esc(c.slug)+'">Удалить</button>':'')+'</div>'
+      +'</div>';
+  }
+
+  function renderCalves(){
+    var list = Object.values(calves).sort(function(a,b){ return (a.tag||"").localeCompare(b.tag||""); });
+    document.getElementById("calfCount").textContent = list.length + (list.length===1?" запись":" записей");
+    var box = document.getElementById("calfList");
+    box.innerHTML = list.length ? list.map(calfCard).join("") : '<div class="empty">Пока нет записей о телятах. Добавьте первую запись кнопкой выше.</div>';
+  }
+
+  function renderAll(){ renderDash(); renderCows(); renderCalves(); }
+
+  // ---------- delegated edit/delete handlers ----------
+  document.addEventListener("click", function(e){
+    var dc = e.target.closest("[data-del-cow]");
+    if(dc && db){ db.doc("cows/"+dc.getAttribute("data-del-cow")).delete().catch(function(){}); }
+    var dt = e.target.closest("[data-del-calf]");
+    if(dt && db){ db.doc("calves/"+dt.getAttribute("data-del-calf")).delete().catch(function(){}); }
+    var ec = e.target.closest("[data-edit-cow]");
+    if(ec){ var rc = cows[ec.getAttribute("data-edit-cow")]; if(rc) openCowForm(rc); }
+    var et = e.target.closest("[data-edit-calf]");
+    if(et){ var rt = calves[et.getAttribute("data-edit-calf")]; if(rt) openCalfForm(rt); }
+  });
+
+  // ---------- forms ----------
+  var cowForm = document.getElementById("cowForm");
+  var COW_FIELDS = ["tag","breed","lactation","group","status","calvingDate","calvingDurationH","assistance","placentaH",
+    "colostrumBrix","laktanFat","laktanProtein","involution15","involution30","firstEstrusDay","servicePeriodDays",
+    "inseminations","pregnancy","notes"];
+  function openCowForm(rec){
+    cowForm.reset();
+    cowForm.elements["_editSlug"].value = rec ? rec.slug : "";
+    COW_FIELDS.forEach(function(k){
+      if(cowForm.elements[k]) cowForm.elements[k].value = rec && rec[k]!=null ? rec[k] : "";
+    });
+    COW_DISEASES.forEach(function(d){ if(cowForm.elements[d[0]]) cowForm.elements[d[0]].checked = !!(rec && rec[d[0]]); });
+    if(cowForm.elements["d_other"]) cowForm.elements["d_other"].checked = !!(rec && rec.d_other);
+    document.getElementById("cowFormTitle").textContent = rec ? "Редактирование: № " + rec.tag : "Новая запись";
+    document.getElementById("cowSubmitBtn").textContent = rec ? "Сохранить изменения" : "Сохранить";
+    cowForm.hidden = false;
+    cowForm.scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+  document.getElementById("btnShowCowForm").addEventListener("click", function(){ openCowForm(null); });
+  document.getElementById("btnCancelCow").addEventListener("click", function(){ cowForm.hidden = true; cowForm.reset(); });
+  cowForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!db){ document.getElementById("cowSaveStatus").textContent = "Нет подключения к хранилищу"; return; }
+    var fd = new FormData(cowForm);
+    var tag = (fd.get("tag")||"").trim();
+    if(!tag){ document.getElementById("cowSaveStatus").textContent = "Укажите номер (бирку)"; return; }
+    var editSlug = fd.get("_editSlug");
+    var slug = editSlug || slugify(tag);
+    var doc = {
+      tag: tag, slug: slug, breed: fd.get("breed")||"", lactation: fd.get("lactation")||"",
+      group: fd.get("group")||"", calvingDate: fd.get("calvingDate")||"",
+      calvingDurationH: fd.get("calvingDurationH")||"", assistance: fd.get("assistance")||"",
+      placentaH: fd.get("placentaH")||"",
+      colostrumBrix: fd.get("colostrumBrix")||"", laktanFat: fd.get("laktanFat")||"", laktanProtein: fd.get("laktanProtein")||"",
+      involution15: fd.get("involution15")||"", involution30: fd.get("involution30")||"",
+      firstEstrusDay: fd.get("firstEstrusDay")||"", servicePeriodDays: fd.get("servicePeriodDays")||"",
+      inseminations: fd.get("inseminations")||"", pregnancy: fd.get("pregnancy")||"",
+      status: fd.get("status")||"active",
+      d_retained_placenta: !!fd.get("d_retained_placenta"), d_metritis: !!fd.get("d_metritis"),
+      d_endometritis: !!fd.get("d_endometritis"), d_subinvolution: !!fd.get("d_subinvolution"),
+      d_mastitis: !!fd.get("d_mastitis"), d_ketosis: !!fd.get("d_ketosis"), d_other: !!fd.get("d_other"),
+      notes: fd.get("notes")||"", updatedAt: Date.now()
+    };
+    document.getElementById("cowSaveStatus").textContent = "Сохранение…";
+    db.doc("cows/"+slug).set(doc).then(function(){
+      document.getElementById("cowSaveStatus").textContent = "Сохранено";
+      cowForm.reset(); cowForm.hidden = true;
+      setTimeout(function(){ document.getElementById("cowSaveStatus").textContent = ""; }, 1500);
+    }).catch(function(err){
+      document.getElementById("cowSaveStatus").textContent = "Ошибка: " + (err && err.code || "не удалось сохранить");
+    });
+  });
+
+  var calfForm = document.getElementById("calfForm");
+  var CALF_FIELDS = ["tag","motherTag","sex","birthDate","birthWeight","calvingEase","colostrumH","colostrumL",
+    "colostrumBrix","igg","totalProtein","healthScore","status","notes"];
+  function openCalfForm(rec){
+    calfForm.reset();
+    calfForm.elements["_editSlug"].value = rec ? rec.slug : "";
+    CALF_FIELDS.forEach(function(k){
+      if(calfForm.elements[k]) calfForm.elements[k].value = rec && rec[k]!=null ? rec[k] : "";
+    });
+    CALF_DISEASES.forEach(function(d){ if(calfForm.elements[d[0]]) calfForm.elements[d[0]].checked = !!(rec && rec[d[0]]); });
+    document.getElementById("calfFormTitle").textContent = rec ? "Редактирование: № " + rec.tag : "Новая запись";
+    document.getElementById("calfSubmitBtn").textContent = rec ? "Сохранить изменения" : "Сохранить";
+    calfForm.hidden = false;
+    calfForm.scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+  document.getElementById("btnShowCalfForm").addEventListener("click", function(){ openCalfForm(null); });
+  document.getElementById("btnCancelCalf").addEventListener("click", function(){ calfForm.hidden = true; calfForm.reset(); });
+  calfForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!db){ document.getElementById("calfSaveStatus").textContent = "Нет подключения к хранилищу"; return; }
+    var fd = new FormData(calfForm);
+    var tag = (fd.get("tag")||"").trim();
+    if(!tag){ document.getElementById("calfSaveStatus").textContent = "Укажите номер (бирку)"; return; }
+    var editSlug = fd.get("_editSlug");
+    var slug = editSlug || slugify(tag);
+    var doc = {
+      tag: tag, slug: slug, motherTag: fd.get("motherTag")||"", sex: fd.get("sex")||"",
+      birthDate: fd.get("birthDate")||"", birthWeight: fd.get("birthWeight")||"",
+      calvingEase: fd.get("calvingEase")||"", colostrumH: fd.get("colostrumH")||"",
+      colostrumL: fd.get("colostrumL")||"", colostrumBrix: fd.get("colostrumBrix")||"",
+      igg: fd.get("igg")||"", totalProtein: fd.get("totalProtein")||"",
+      healthScore: fd.get("healthScore")||"", status: fd.get("status")||"alive",
+      d_diarrhea: !!fd.get("d_diarrhea"), d_respiratory: !!fd.get("d_respiratory"), d_omphalitis: !!fd.get("d_omphalitis"),
+      notes: fd.get("notes")||"", updatedAt: Date.now()
+    };
+    document.getElementById("calfSaveStatus").textContent = "Сохранение…";
+    db.doc("calves/"+slug).set(doc).then(function(){
+      document.getElementById("calfSaveStatus").textContent = "Сохранено";
+      calfForm.reset(); calfForm.hidden = true;
+      setTimeout(function(){ document.getElementById("calfSaveStatus").textContent = ""; }, 1500);
+    }).catch(function(err){
+      document.getElementById("calfSaveStatus").textContent = "Ошибка: " + (err && err.code || "не удалось сохранить");
+    });
+  });
+
+  // ---------- storage: browser localStorage (per-device, no account, no server) ----------
+  function makeLocalDB(){
+    var listeners = {};
+    function readAll(coll){
+      try{ return JSON.parse(localStorage.getItem("db_"+coll) || "{}"); }catch(e){ return {}; }
+    }
+    function writeAll(coll, obj){
+      try{ localStorage.setItem("db_"+coll, JSON.stringify(obj)); }catch(e){}
+      notify(coll);
+    }
+    function snapshotFor(coll){
+      var all = readAll(coll);
+      return { docs: Object.keys(all).map(function(id){
+        return { id: id, data: function(){ return all[id]; } };
+      }) };
+    }
+    function notify(coll){ (listeners[coll]||[]).forEach(function(fn){ fn(snapshotFor(coll)); }); }
+    return {
+      collection: function(coll){
+        return {
+          onSnapshot: function(cb){
+            listeners[coll] = listeners[coll] || [];
+            listeners[coll].push(cb);
+            cb(snapshotFor(coll));
+          }
+        };
+      },
+      doc: function(p){
+        var parts = p.split("/"); var coll = parts[0], id = parts[1];
+        return {
+          set: function(data){
+            return new Promise(function(resolve){
+              var all = readAll(coll);
+              all[id] = data;
+              writeAll(coll, all);
+              resolve();
+            });
+          },
+          delete: function(){
+            return new Promise(function(resolve){
+              var all = readAll(coll);
+              delete all[id];
+              writeAll(coll, all);
+              resolve();
+            });
+          }
+        };
+      }
+    };
+  }
+
+  // ---------- boot ----------
+  function boot(){
+    canWrite = true;
+    db = makeLocalDB();
+
+    db.collection("cows").onSnapshot(function(snap){
+      cows = {};
+      (snap.docs||[]).forEach(function(d){ cows[d.id] = Object.assign({tag:d.id, slug:d.id}, d.data()); });
+      renderAll();
+    });
+
+    db.collection("calves").onSnapshot(function(snap){
+      calves = {};
+      (snap.docs||[]).forEach(function(d){ calves[d.id] = Object.assign({tag:d.id, slug:d.id}, d.data()); });
+      renderAll();
+    });
+  }
+
+  renderAll();
+  boot();
+})();
+</script>
+
+</body>
+</html>
