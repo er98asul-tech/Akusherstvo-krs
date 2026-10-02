@@ -50,6 +50,60 @@
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 body{background:var(--bg); color:var(--fg); font-family:var(--font-body); padding-inline:16px; padding-block:18px 100px; max-width:1000px; margin:0 auto;}
+
+@keyframes popIn{ from{ opacity:0; transform:translateY(10px) scale(.97); } to{ opacity:1; transform:translateY(0) scale(1); } }
+@keyframes floatGlow{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+@keyframes shimmerBg{ 0%{ background-position:0% 50%; } 100%{ background-position:200% 50%; } }
+@keyframes spinSlow{ to{ transform:rotate(360deg); } }
+@keyframes drawDonut{ from{ stroke-dashoffset: var(--circ, 0); opacity:0; } to{ opacity:1; } }
+
+.stat-tile, .rec-card, .donut-card, .bars, .table-wrap{ animation:popIn .5s cubic-bezier(.22,1,.36,1) both; }
+.stat-grid .stat-tile:nth-child(1){ animation-delay:.02s }
+.stat-grid .stat-tile:nth-child(2){ animation-delay:.06s }
+.stat-grid .stat-tile:nth-child(3){ animation-delay:.10s }
+.stat-grid .stat-tile:nth-child(4){ animation-delay:.14s }
+.stat-grid .stat-tile:nth-child(5){ animation-delay:.18s }
+.stat-grid .stat-tile:nth-child(6){ animation-delay:.22s }
+.stat-grid .stat-tile:nth-child(7){ animation-delay:.26s }
+.stat-grid .stat-tile:nth-child(8){ animation-delay:.30s }
+.card-grid .rec-card{ animation-delay:calc(var(--i,0) * 40ms); }
+
+.stat-tile{ transition:transform .2s ease, box-shadow .2s ease; }
+.stat-tile:hover{ transform:translateY(-3px); box-shadow:0 10px 24px -12px rgba(0,0,0,.25); }
+.stat-tile .icon{ transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+.stat-tile:hover .icon{ transform:scale(1.15) rotate(-6deg); }
+
+.rec-card{ transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.rec-card:hover{ transform:translateY(-3px); box-shadow:0 12px 28px -14px rgba(0,0,0,.28); border-color:var(--card-accent,var(--teal)); }
+
+button.primary{ transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+button.primary:hover{ transform:translateY(-1px); box-shadow:0 8px 18px -8px var(--teal); filter:brightness(1.05); }
+button.primary:active{ transform:translateY(0) scale(.97); }
+button.ghost, .export-btn{ transition:transform .15s ease, border-color .15s ease, color .15s ease; }
+button.ghost:active, .export-btn:active{ transform:scale(.96); }
+
+nav.tabs button{ transition:background .25s ease, color .25s ease, transform .15s ease; }
+nav.tabs button:active{ transform:scale(.95); }
+nav.tabs button.active{ animation:popIn .3s ease both; }
+.bottombar button{ transition:color .2s ease, transform .15s ease; }
+.bottombar button:active{ transform:scale(.88); }
+.bottombar button.active svg{ animation:floatGlow 1.6s ease-in-out infinite; }
+
+header.top .mark{
+  background:linear-gradient(120deg,var(--teal),var(--violet),var(--coral),var(--teal));
+  background-size:300% 300%;
+  animation:shimmerBg 6s ease infinite;
+  box-shadow:0 6px 18px -6px var(--violet);
+}
+
+.donut-card svg circle{ transition:stroke-dasharray 1s cubic-bezier(.22,1,.36,1), stroke-dashoffset 1s cubic-bezier(.22,1,.36,1); }
+.bar-fill{ transition:width 1s cubic-bezier(.22,1,.36,1); }
+.chip{ transition:transform .15s ease; }
+.chip:hover{ transform:scale(1.06); }
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+}
 h1,h2,h3{font-family:var(--font-display); font-weight:700; text-wrap:balance; margin:0}
 .eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--teal); font-weight:600}
 
@@ -499,8 +553,11 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
       {num: classified? Math.round(100*satCount/classified)+"%":"—", lbl: "Хор./отл. передача IgG", icon: "shield", cls: classified && satCount/classified<0.7? "warn":"ok"},
     ];
     document.getElementById("statGrid").innerHTML = tiles.map(function(t){
-      return '<div class="stat-tile '+(t.cls||"")+'"><div class="icon">'+ICON[t.icon]+'</div><div><div class="num">'+esc(t.num)+'</div><div class="lbl">'+esc(t.lbl)+'</div></div></div>';
+      var m = /^(-?\d+(?:\.\d+)?)(.*)$/.exec(String(t.num));
+      var numAttr = m ? ' data-count="'+m[1]+'" data-suffix="'+esc(m[2])+'"' : '';
+      return '<div class="stat-tile '+(t.cls||"")+'"><div class="icon">'+ICON[t.icon]+'</div><div><div class="num"'+numAttr+'>'+(m?"0"+esc(m[2]):esc(t.num))+'</div><div class="lbl">'+esc(t.lbl)+'</div></div></div>';
     }).join("");
+    animateCounters();
 
     var attention = [];
     cowList.forEach(function(c){
@@ -556,7 +613,8 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
       var frac = counts[g]/total;
       var len = frac*circumference;
       var seg = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" style="stroke:'+GROUP_COLORS[g]+'" stroke-width="16" '
-        +'stroke-dasharray="'+len.toFixed(2)+' '+(circumference-len).toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+        +'data-len="'+len.toFixed(2)+'" data-gap="'+(circumference-len).toFixed(2)+'" '
+        +'stroke-dasharray="0 '+circumference.toFixed(2)+'" stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
       offset += len;
       return seg;
     }).join("");
@@ -567,6 +625,43 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
     legendBox.innerHTML = order.map(function(g){
       return '<div class="row"><span class="dot" style="background:'+GROUP_COLORS[g]+'"></span><span class="name">'+esc(g)+'</span><span class="val">'+counts[g]+'</span></div>';
     }).join("");
+    if(reduceMotion){
+      donutBox.querySelectorAll("circle[data-len]").forEach(function(c){
+        c.setAttribute("stroke-dasharray", c.getAttribute("data-len")+" "+c.getAttribute("data-gap"));
+      });
+    } else {
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          donutBox.querySelectorAll("circle[data-len]").forEach(function(c){
+            c.setAttribute("stroke-dasharray", c.getAttribute("data-len")+" "+c.getAttribute("data-gap"));
+          });
+        });
+      });
+    }
+  }
+
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function animateCounters(){
+    var els = document.querySelectorAll(".num[data-count]");
+    if(reduceMotion){
+      els.forEach(function(el){ el.textContent = el.getAttribute("data-count") + el.getAttribute("data-suffix"); });
+      return;
+    }
+    els.forEach(function(el){
+      var target = parseFloat(el.getAttribute("data-count"));
+      var suffix = el.getAttribute("data-suffix") || "";
+      var isInt = Number.isInteger(target);
+      var start = performance.now();
+      var dur = 650;
+      function tick(now){
+        var p = Math.min(1, (now-start)/dur);
+        var eased = 1 - Math.pow(1-p, 3);
+        var val = target*eased;
+        el.textContent = (isInt ? Math.round(val) : val.toFixed(1)) + suffix;
+        if(p<1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
   }
 
   function avg(arr){ var n=arr.filter(function(v){return v!=null && v!=="" && !isNaN(v);}).map(Number); return n.length? n.reduce(function(a,b){return a+b;},0)/n.length : null; }
@@ -656,7 +751,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
   }
 
   // ---------- rendering: cows ----------
-  function cowCard(c){
+  function cowCard(c, i){
     var chips = [];
     if(c.group) chips.push('<span class="chip violet">'+esc(c.group)+'</span>');
     if(c.status==="culled") chips.push('<span class="chip muted">выбыла</span>');
@@ -682,7 +777,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
     if(c.inseminations) fields.push(["Осеменений", c.inseminations]);
 
     var accent = (diseaseList(c,COW_DISEASES).length||c.d_other) ? "var(--danger)" : (bs && bs.cls!=="success") ? "var(--warning)" : "var(--teal)";
-    return '<div class="rec-card" style="--card-accent:'+accent+'">'
+    return '<div class="rec-card" style="--card-accent:'+accent+'; --i:'+(i||0)+'">'
       +'<div class="rec-top"><span class="tag">№ '+esc(c.tag)+'</span></div>'
       +(chips.length?'<div class="chips">'+chips.join("")+'</div>':'')
       +(fields.length?'<div class="rec-fields">'+fields.map(function(f){return '<div><span>'+esc(f[0])+'</span>'+esc(f[1])+'</div>';}).join("")+'</div>':'')
@@ -703,7 +798,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
   }
 
   // ---------- rendering: calves ----------
-  function calfCard(c){
+  function calfCard(c, i){
     var chips = [];
     var t = transferStatus(c);
     if(t) chips.push('<span class="chip '+t.cls+'">'+t.label+'</span>');
@@ -725,7 +820,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
     if(c.healthScore!=null && c.healthScore!=="") fields.push(["Клин. балл", c.healthScore]);
 
     var accent = c.status==="dead" ? "var(--danger)" : (t && t.cls==="danger") ? "var(--danger)" : (diseaseList(c,CALF_DISEASES).length? "var(--warning)" : "var(--coral)");
-    return '<div class="rec-card" style="--card-accent:'+accent+'">'
+    return '<div class="rec-card" style="--card-accent:'+accent+'; --i:'+(i||0)+'">'
       +'<div class="rec-top"><span class="tag">№ '+esc(c.tag)+'</span></div>'
       +(chips.length?'<div class="chips">'+chips.join("")+'</div>':'')
       +(fields.length?'<div class="rec-fields">'+fields.map(function(f){return '<div><span>'+esc(f[0])+'</span>'+esc(f[1])+'</div>';}).join("")+'</div>':'')
