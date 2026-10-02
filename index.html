@@ -1016,6 +1016,71 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
     };
   }
 
+  // ---------- storage: shared Google Sheet via Apps Script, with a localStorage
+  // mirror so the last known data still shows if the network/script is briefly down ----------
+  var SYNC_API_URL = "https://script.google.com/macros/s/AKfycbzsGXbJ4n6sLz4CE8J5DYVaT70lSWNokJryRXc90p4s2bX89zreNsVajz1u7alGLYbZLw/exec";
+  function makeRemoteDB(apiUrl){
+    var listeners = {};
+    var cache = {};
+    function cacheRead(coll){
+      try{ return JSON.parse(localStorage.getItem("db_cache_"+coll) || "{}"); }catch(e){ return {}; }
+    }
+    function cacheWrite(coll, obj){
+      try{ localStorage.setItem("db_cache_"+coll, JSON.stringify(obj)); }catch(e){}
+    }
+    function snapshotFor(coll){
+      var all = cache[coll] || {};
+      return { docs: Object.keys(all).map(function(id){ return { id:id, data:function(){ return all[id]; } }; }) };
+    }
+    function notify(coll){ (listeners[coll]||[]).forEach(function(fn){ fn(snapshotFor(coll)); }); }
+    function fetchColl(coll){
+      return fetch(apiUrl + "?sheet=" + encodeURIComponent(coll) + "&_=" + Date.now())
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res || res.ok!==true) throw new Error("bad response");
+          var obj = {};
+          (res.rows||[]).forEach(function(row){ if(row && row.slug) obj[String(row.slug)] = row; });
+          cache[coll] = obj;
+          cacheWrite(coll, obj);
+          notify(coll);
+        });
+    }
+    return {
+      collection: function(coll){
+        return {
+          onSnapshot: function(cb, errCb){
+            listeners[coll] = listeners[coll] || [];
+            listeners[coll].push(cb);
+            if(!cache[coll]) cache[coll] = cacheRead(coll); // show last known data instantly
+            cb(snapshotFor(coll));
+            fetchColl(coll).catch(function(){ if(errCb) errCb(); });
+            setInterval(function(){ fetchColl(coll).catch(function(){}); }, 20000);
+          }
+        };
+      },
+      doc: function(p){
+        var parts = p.split("/"); var coll = parts[0], id = parts[1];
+        return {
+          set: function(data){
+            return fetch(apiUrl, {
+              method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+              body: JSON.stringify({action:"set", sheet:coll, slug:id, data:data})
+            }).then(function(r){ return r.json(); }).then(function(res){
+              if(!res || res.ok!==true) throw new Error((res&&res.error)||"write failed");
+              return fetchColl(coll);
+            });
+          },
+          delete: function(){
+            return fetch(apiUrl, {
+              method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+              body: JSON.stringify({action:"delete", sheet:coll, slug:id})
+            }).then(function(r){ return r.json(); }).then(function(){ return fetchColl(coll); });
+          }
+        };
+      }
+    };
+  }
+
   // ---------- CSV export ----------
   function csvCell(v){
     var s = v==null ? "" : String(v);
@@ -1057,7 +1122,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
   // ---------- boot ----------
   function boot(){
     canWrite = true;
-    db = makeLocalDB();
+    db = SYNC_API_URL ? makeRemoteDB(SYNC_API_URL) : makeLocalDB();
 
     db.collection("cows").onSnapshot(function(snap){
       cows = {};
