@@ -639,6 +639,16 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
   }
 
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // extra safety net: background tabs can fully freeze rAF/setTimeout, so keep
+  // a list of pending "snap to final value" callbacks and flush them the
+  // instant the page becomes visible again (covers PWA launch transitions etc.)
+  var pendingFinishers = [];
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden){
+      pendingFinishers.forEach(function(fn){ fn(); });
+      pendingFinishers.length = 0;
+    }
+  });
   function animateCounters(){
     var els = document.querySelectorAll(".num[data-count]");
     if(reduceMotion || document.hidden){
@@ -654,6 +664,7 @@ form.add-form .form-actions{grid-column:1/-1; display:flex; gap:8px; justify-con
       var dur = 650;
       var done = false;
       function finish(){ if(done) return; done = true; el.textContent = finalText; }
+      pendingFinishers.push(finish);
       // safety net: guarantee the correct value lands even if the tab is
       // backgrounded and requestAnimationFrame stalls or never fires again
       setTimeout(finish, dur + 400);
